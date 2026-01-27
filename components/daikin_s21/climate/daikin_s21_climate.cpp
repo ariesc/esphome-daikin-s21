@@ -41,6 +41,7 @@ void DaikinS21Climate::setup() {
   this->heat_params.target_pref = global_preferences->make_preference<int16_t>(h + 3);
   // populate default traits
   this->traits_.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE | climate::CLIMATE_SUPPORTS_ACTION);
+#ifdef USE_CLIMATE_VISUAL_OVERRIDES
   if (std::isfinite(this->visual_min_temperature_override_)) {
     this->traits_.set_visual_min_temperature(this->visual_min_temperature_override_);
   } else {
@@ -61,6 +62,7 @@ void DaikinS21Climate::setup() {
   } else {
     this->traits_.set_visual_current_temperature_step(TEMPERATURE_STEP.f_degc());
   }
+#endif
   this->traits_.set_supported_fan_modes({climate::CLIMATE_FAN_AUTO, climate::CLIMATE_FAN_QUIET});
   this->traits_.set_supported_custom_fan_modes({
       daikin_fan_mode_to_cstr(DaikinFan1),
