@@ -129,7 +129,7 @@ class DaikinQuery {
 
  public:
   constexpr DaikinQuery(const std::string_view command = "", const handler_fn handler = nullptr, const uint8_t response_length = 0, const bool is_static = false)
-    : command(command), handler(handler), is_static(is_static), size(std::size(unscheduled_value)), response_length(response_length)
+    : command(command), handler(handler), size(std::size(unscheduled_value)), is_static(is_static), response_length(response_length)
   {
     static_assert(std::size(unscheduled_value) <= sizeof(this->buffer.internal));
     std::ranges::copy(unscheduled_value, this->buffer.internal.begin());
