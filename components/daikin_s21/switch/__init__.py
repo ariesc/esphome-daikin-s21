@@ -38,34 +38,20 @@ CONFIG_SCHEMA = (
     .extend({cv.GenerateID(): cv.declare_id(DaikinS21Switch)})
     .extend(S21_PARENT_SCHEMA)
     .extend({
-        cv.Optional(CONF_POWERFUL): switch.switch_schema(
-            DaikinS21SwitchMode,
-            icon=ICON_POWERFUL,
-        ).extend(S21_PARENT_SCHEMA),
-        cv.Optional(CONF_COMFORT): switch.switch_schema(
-            DaikinS21SwitchMode,
-            icon=ICON_COMFORT,
-        ).extend(S21_PARENT_SCHEMA),
-        cv.Optional(CONF_QUIET): switch.switch_schema(
-            DaikinS21SwitchMode,
-            icon=ICON_QUIET,
-        ).extend(S21_PARENT_SCHEMA),
-        cv.Optional(CONF_STREAMER): switch.switch_schema(
-            DaikinS21SwitchMode,
-            icon=ICON_STREAMER,
-        ).extend(S21_PARENT_SCHEMA),
-        cv.Optional(CONF_LED): switch.switch_schema(
-            DaikinS21SwitchMode,
-            icon=ICON_LIGHTBULB,
-        ).extend(S21_PARENT_SCHEMA),
-        cv.Optional(CONF_MOTION): switch.switch_schema(
-            DaikinS21SwitchMode,
-            icon=ICON_MOTION_SENSOR,
-        ).extend(S21_PARENT_SCHEMA),
-        cv.Optional(CONF_ECONO): switch.switch_schema(
-            DaikinS21SwitchMode,
-            icon=ICON_ECONO,
-        ).extend(S21_PARENT_SCHEMA),
+        cv.Optional(CONF_POWERFUL): switch.switch_schema(DaikinS21SwitchMode, icon=ICON_POWERFUL)
+        .extend(S21_PARENT_SCHEMA),
+        cv.Optional(CONF_COMFORT): switch.switch_schema(DaikinS21SwitchMode, icon=ICON_COMFORT)
+        .extend(S21_PARENT_SCHEMA),
+        cv.Optional(CONF_QUIET): switch.switch_schema(DaikinS21SwitchMode, icon=ICON_QUIET)
+        .extend(S21_PARENT_SCHEMA),
+        cv.Optional(CONF_STREAMER): switch.switch_schema(DaikinS21SwitchMode, icon=ICON_STREAMER)
+        .extend(S21_PARENT_SCHEMA),
+        cv.Optional(CONF_LED): switch.switch_schema(DaikinS21SwitchMode, icon=ICON_LIGHTBULB)
+        .extend(S21_PARENT_SCHEMA),
+        cv.Optional(CONF_MOTION): switch.switch_schema(DaikinS21SwitchMode, icon=ICON_MOTION_SENSOR)
+        .extend(S21_PARENT_SCHEMA),
+        cv.Optional(CONF_ECONO): switch.switch_schema(DaikinS21SwitchMode, icon=ICON_ECONO)
+        .extend(S21_PARENT_SCHEMA),
     })
 )
 

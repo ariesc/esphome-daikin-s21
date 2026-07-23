@@ -1,10 +1,10 @@
 #pragma once
 
 #include <bitset>
+#include <concepts>
 #include <compare>
 #include <functional>
 #include <limits>
-#include <type_traits>
 #include <utility>
 #include "esphome/components/climate/climate.h"
 
@@ -37,10 +37,10 @@ class DaikinC10 {
 
   constexpr DaikinC10() = default;
 
-  template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
+  template <std::floating_point T>
   constexpr DaikinC10(const T valf) : value(std::isfinite(valf) ? ((static_cast<int16_t>(valf * 10 * 2) + 1) / 2) : nan_sentinel) {} // round to nearest 0.1C
 
-  template <typename T, typename std::enable_if_t<std::is_integral_v<T>, bool> = true>
+  template <std::integral T>
   constexpr DaikinC10(const T vali) : value(vali) {}
 
   explicit constexpr operator float() const { return (value == nan_sentinel) ? NAN : (value / 10.0F); }
@@ -75,9 +75,6 @@ class DaikinC10 {
 inline constexpr DaikinC10 SETPOINT_STEP{1.0F}; // Daikin setpoint granularity
 inline constexpr DaikinC10 TEMPERATURE_STEP{0.5F}; // Daikin temperature sensor granularity
 inline constexpr DaikinC10 TEMPERATURE_INVALID{DaikinC10::nan_sentinel}; // NaN
-
-template<size_t N>
-using uint8_array = std::array<uint8_t, N>;
 
 /**
  * Function template for looking up an index enum value from an encoding.
