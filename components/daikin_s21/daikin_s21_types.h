@@ -89,7 +89,7 @@ using uint8_array = std::array<uint8_t, N>;
  * @param encoding encoding to look up
  * @return associated index enum value
  */
-template <typename T, const uint8_array &encoding_table>
+template <typename T, const auto &encoding_table>
 constexpr T encoding_to_enum(const uint8_t encoding) {
   const auto iter = std::ranges::find(encoding_table, encoding);
   if (iter != std::ranges::end(encoding_table)) {
@@ -108,7 +108,7 @@ constexpr T encoding_to_enum(const uint8_t encoding) {
  * @param index index to look up
  * @return associated encoding
  */
-template <typename T, const uint8_array &encoding_table>
+template <typename T, const auto &encoding_table>
 constexpr uint8_t enum_to_encoding(const T index) {
   if (index < encoding_table.size()) {
     return encoding_table[index];
