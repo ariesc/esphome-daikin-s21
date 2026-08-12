@@ -70,7 +70,7 @@ class DaikinS21 : public PollingComponent {
   CallbackManager<void(void)> update_callbacks{};
 
   // value accessors
-  bool is_ready() { return this->ready.all(); }
+  bool is_ready() const { return this->ready.all(); }
   auto get_climate() const { return this->climate.value(); }
   auto get_climate_action() const { return this->action; }
   auto get_swing_mode() const { return this->swing_humidity.value().swing; }
@@ -181,7 +181,7 @@ class DaikinS21 : public PollingComponent {
 
   // serial
   uart::UARTComponent& uart;
-  std::vector<uint8_t> response = std::vector<uint8_t>(MAX_RESPONSE_SIZE);
+  FixedVector<uint8_t> response{};
   enum class CommState : uint8_t {
     CommandAck,
     QueryAck,
@@ -245,8 +245,8 @@ class DaikinS21 : public PollingComponent {
   ESPPreferenceObject energy_pref_{};
   uint8_t humidity{50};
   uint8_t demand_pull{};
-  climate::ClimateAction action_reported = climate::CLIMATE_ACTION_OFF; // raw readout
-  climate::ClimateAction action = climate::CLIMATE_ACTION_OFF; // corrected at end of cycle
+  climate::ClimateAction action_reported{}; // raw readout, last action if idle
+  climate::ClimateAction action{}; // corrected at end of cycle
   DaikinUnitState unit_state{};
   DaikinSystemState system_state{};
   bool active{};      // actively using the compressor

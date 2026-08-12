@@ -143,7 +143,7 @@ static constexpr std::array<const char *, PowerfulSourceCount> powerful_source_s
 /**
  * Apply the characteristics of a new vertical swing mode to a climate swing mode
  */
-void apply_vertical_swing_mode(const DaikinVerticalSwingMode vertical_swing, climate::ClimateSwingMode &swing) {
+constexpr void apply_vertical_swing_mode(const DaikinVerticalSwingMode vertical_swing, climate::ClimateSwingMode &swing) {
   if (vertical_swing == DaikinVerticalSwingOn) {
     if (swing == climate::CLIMATE_SWING_OFF) {
       swing = climate::CLIMATE_SWING_VERTICAL;
@@ -162,7 +162,7 @@ void apply_vertical_swing_mode(const DaikinVerticalSwingMode vertical_swing, cli
 /**
  * Apply the characteristics of a new climate swing mode to a vertical swing mode
  */
-void apply_swing_mode(const climate::ClimateSwingMode swing, DaikinVerticalSwingMode &vertical_swing) {
+constexpr void apply_swing_mode(const climate::ClimateSwingMode swing, DaikinVerticalSwingMode &vertical_swing) {
   switch (swing) {
     case climate::CLIMATE_SWING_OFF:
     case climate::CLIMATE_SWING_HORIZONTAL:
@@ -280,6 +280,9 @@ void DaikinS21::setup() {
 
   // start 1min periodic state dump timer
   this->set_interval(60*1000, [this](){ this->dump_state(); });
+
+  // allocate serial result buffer
+  this->response.init(MAX_RESPONSE_SIZE);
 
   // kick off initial query scan
   this->reset_queries();  // importantly schedules initial queries
@@ -462,7 +465,7 @@ void DaikinS21::set_mode(const DaikinMode mode, const bool enable) {
 void DaikinS21::set_brightness_mode(const DaikinLEDBrightnessMode brightness) {
   bool led = false;
   bool motion = false;
-  switch(brightness) {
+  switch (brightness) {
     case DaikinLEDBrightnessHigh:
       led = true;
       break;
@@ -498,7 +501,7 @@ void DaikinS21::set_demand_control(const uint8_t percent) {
 /**
  * Set the vertical swing mode and trigger a write to the unit if it changed.
  */
-void DaikinS21::set_vertical_swing_mode(DaikinVerticalSwingMode swing) {
+void DaikinS21::set_vertical_swing_mode(const DaikinVerticalSwingMode swing) {
   if (this->get_vertical_swing_mode() != swing) {
     this->vertical_swing_mode.stage(swing);
     this->trigger_cycle();
@@ -928,9 +931,9 @@ void DaikinS21::handle_serial_idle() {
   } else {
     // resolve action
     if (this->unit_state.defrost() && (this->action_reported == climate::CLIMATE_ACTION_HEATING)) {
-      this->action = climate::CLIMATE_ACTION_COOLING; // report cooling during defrost
+      this->action = climate::CLIMATE_ACTION_DEFROSTING;
     } else if (this->active || (this->action_reported == climate::CLIMATE_ACTION_FAN) || (this->action_reported == climate::CLIMATE_ACTION_OFF)) {
-      this->action = this->action_reported; // trust the unit when active or in fan only or off
+      this->action = this->action_reported; // trust the unit when active or fan only or off
     } else {
       this->action = climate::CLIMATE_ACTION_IDLE;
     }

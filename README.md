@@ -222,7 +222,7 @@ example configuration.
   not the user setpoint and not that interesting to me but may be useful for
   your automations.
 * Fan speed of inside blower.
-* Vertical swing angle of louver. This uses Daikin's reference frame.
+* Vertical swing angle of louvre. This uses Daikin's reference frame.
 * Compressor frequency of the outside exchanger.
 * Humidity. Not supported on all units, can report a consistent 50% or 0% if
   not present.
@@ -474,7 +474,7 @@ The default is 1.0°C to match Daikin's internal granularity.
 
 ```yaml
 esphome:
-  min_version: "2026.5.0"
+  min_version: "2026.7.0"
   devices:
     - id: daikin_outdoor
       name: "Daikin Compressor"
