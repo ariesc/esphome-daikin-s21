@@ -45,13 +45,13 @@ void DaikinS21Climate::setup() {
   }
 
   uint32_t h = this->get_object_id_hash();
-  this->heat_cool_params.target_pref = global_preferences->make_preference<int16_t>(h + 1);
-  this->cool_params.target_pref = global_preferences->make_preference<int16_t>(h + 2);
-  this->heat_params.target_pref = global_preferences->make_preference<int16_t>(h + 3);
+  this->setpoint_params.heat_cool.target_pref = global_preferences->make_preference<int16_t>(h + 1);
+  this->setpoint_params.cool.target_pref = global_preferences->make_preference<int16_t>(h + 2);
+  this->setpoint_params.heat.target_pref = global_preferences->make_preference<int16_t>(h + 3);
   // populate default traits
   this->traits_.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE | climate::CLIMATE_SUPPORTS_ACTION);
-  this->traits_.set_visual_min_temperature(std::min({this->heat_cool_params.min, this->cool_params.min, this->heat_params.min}).f_degc());  // will be overridden in get_traits()
-  this->traits_.set_visual_max_temperature(std::max({this->heat_cool_params.max, this->cool_params.max, this->heat_params.max}).f_degc());
+  this->traits_.set_visual_min_temperature(std::min({this->setpoint_params.heat_cool.min, this->setpoint_params.cool.min, this->setpoint_params.heat.min}).f_degc());  // will be overridden in get_traits()
+  this->traits_.set_visual_max_temperature(std::max({this->setpoint_params.heat_cool.max, this->setpoint_params.cool.max, this->setpoint_params.heat.max}).f_degc());
   this->traits_.set_visual_target_temperature_step(SETPOINT_STEP.f_degc());
   this->traits_.set_visual_current_temperature_step(TEMPERATURE_STEP.f_degc());
   this->traits_.set_supported_fan_modes({climate::CLIMATE_FAN_AUTO, climate::CLIMATE_FAN_QUIET});
@@ -112,8 +112,9 @@ void DaikinS21Climate::loop() {
     do_publish = true;
   }
 
-  // Update target temperature (user's desire) and unit setpoint (after offset)
-  if (auto * const mode_params = this->get_setpoint_mode_params(reported_climate.mode)) {
+  // Update target temperature (user's desire) and unit setpoint (after offset) in setpoint modes
+  auto * const mode_params = this->setpoint_params.get(reported_climate.mode);
+  if (mode_params != nullptr) {
     // Initialize setpoint so chenge detection can work
     if (this->unit_setpoint == TEMPERATURE_INVALID) {
       this->unit_setpoint = reported_climate.setpoint;
@@ -177,6 +178,9 @@ void DaikinS21Climate::loop() {
   // Command unit when setpoint changed
   if (update_unit_setpoint) {
     this->set_s21_climate();
+    if (mode_params != nullptr) {
+      mode_params->save_target(this->target_temperature);
+    }
   }
 }
 
@@ -194,7 +198,7 @@ void DaikinS21Climate::dump_config() {
   }
   LOG_UPDATE_INTERVAL(this);
   for (const climate::ClimateMode mode : {climate::CLIMATE_MODE_HEAT_COOL, climate::CLIMATE_MODE_COOL, climate::CLIMATE_MODE_HEAT}) {
-    if (const auto * const params = get_setpoint_mode_params(mode)) {
+    if (const auto * const params = setpoint_params.get(mode)) {
       ESP_LOGCONFIG(TAG, "  %s parameters\n"
                          "    Unit setpoint range: %.1f-%.1f\n"
                          "    User offset: %+.1f",
@@ -211,22 +215,23 @@ void DaikinS21Climate::dump_config() {
  */
 void DaikinS21Climate::control(const climate::ClimateCall &call) {
   // DaikinClimateSettings changes
-  bool climate_changed{};
-
-  if (call.get_mode().has_value() && (this->mode != call.get_mode().value())) {
+  bool climate_changed = (call.get_mode().has_value() && (this->mode != call.get_mode().value()));
+  if (climate_changed) {
     this->mode = call.get_mode().value();
-    climate_changed = true;
   }
-  auto * const mode_params = this->get_setpoint_mode_params(this->mode);
+  auto * const mode_params = this->setpoint_params.get(this->mode);
 
   // Target change is only relevant to the unit if it causes a setpoint change, track separately
-  bool target_changed{};
-  const DaikinC10 new_target = call.get_target_temperature().has_value() ? call.get_target_temperature().value() :  // Target provided
-                               (mode_params != nullptr) ? mode_params->load_target() :  // Try to use the saved target if call does not include it
+  const DaikinC10 new_target = call.get_target_temperature().has_value() ? call.get_target_temperature().value() :  // Target provided by call
+                               (climate_changed == false) ? this->target_temperature :  // Otherwise preserve the existing target if not a mode change
+                               (mode_params != nullptr) ? mode_params->load_target() :  // Otherwise try to use the saved target if a setpoint mode
                                TEMPERATURE_INVALID;
-  if (this->target_temperature != new_target) {
+  const bool target_changed = (this->target_temperature != new_target);
+  if (target_changed) {
+    if (mode_params != nullptr) {
+      mode_params->save_target(new_target); // save the new target if in a setpoint mode
+    }
     this->target_temperature = new_target.f_degc();
-    target_changed = true;
   }
 
   // Check for unit setpoint change if mode or target changing
@@ -254,7 +259,7 @@ void DaikinS21Climate::control(const climate::ClimateCall &call) {
   }
 
   if (climate_changed) {
-    this->set_s21_climate();  // mode, unit setpoint and fan required
+    this->set_s21_climate();
   }
 
   // climate::ClimateSwingMode changes
@@ -308,7 +313,7 @@ void DaikinS21Climate::set_humidity_reference_sensor(sensor::Sensor * const sens
  * Set parameters for a given setpoint mode.
  */
 void DaikinS21Climate::set_setpoint_mode_config(const climate::ClimateMode mode, const DaikinC10 offset, const DaikinC10 min, const DaikinC10 max) {
-  if (auto * const mode_params = this->get_setpoint_mode_params(mode)) {
+  if (auto * const mode_params = this->setpoint_params.get(mode)) {
     mode_params->offset = offset;
     mode_params->min = min;
     mode_params->max = max;
@@ -437,27 +442,23 @@ bool DaikinS21Climate::set_daikin_fan_mode(const DaikinFanMode fan) {
  *
  * Converts to internal settings format and forwards to DaikinS21 component to apply.
  */
-void DaikinS21Climate::set_s21_climate() {
-  // Command new settings
+void DaikinS21Climate::set_s21_climate() const {
   this->get_parent()->set_climate_settings({this->mode, this->get_daikin_fan_mode(), this->unit_setpoint});
-  if (auto * const mode_params = this->get_setpoint_mode_params(this->mode)) {
-    mode_params->save_target(this->target_temperature);
-  }
 }
 
 /**
  * Get the parameters associated with the setpoint mode, nullptr if not a setpoint mode.
  */
-DaikinSetpointMode* DaikinS21Climate::get_setpoint_mode_params(climate::ClimateMode mode) {
+DaikinSetpointMode* DaikinS21Climate::SetpointModeParams::get(const climate::ClimateMode mode) {
   switch (mode) {
-    case climate::CLIMATE_MODE_HEAT_COOL:
-      return &this->heat_cool_params;
-      break;
     case climate::CLIMATE_MODE_COOL:
-      return &this->cool_params;
+      return &this->cool;
       break;
     case climate::CLIMATE_MODE_HEAT:
-      return &this->heat_params;
+      return &this->heat;
+      break;
+    case climate::CLIMATE_MODE_HEAT_COOL:
+      return &this->heat_cool;
       break;
     default:
       return nullptr;
