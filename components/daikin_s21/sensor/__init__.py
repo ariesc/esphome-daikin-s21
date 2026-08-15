@@ -12,6 +12,7 @@ from esphome.const import (
     CONF_NEVER,
     CONF_POWER,
     CONF_TARGET_TEMPERATURE,
+    CONF_UPDATE_INTERVAL,
     DEVICE_CLASS_ENERGY,
     DEVICE_CLASS_FREQUENCY,
     DEVICE_CLASS_HUMIDITY,
@@ -35,6 +36,7 @@ from esphome.const import (
 
 from .. import (
     daikin_s21_ns,
+    validate_interval,
     CONF_S21_ID,
     S21_PARENT_SCHEMA,
     ICON_VERTICAL_SWING,
@@ -74,6 +76,7 @@ CONFIG_SCHEMA = (
     .extend(cv.polling_component_schema(CONF_NEVER))
     .extend(S21_PARENT_SCHEMA)
     .extend({
+        cv.Optional(CONF_UPDATE_INTERVAL): validate_interval,
         cv.Optional(CONF_COIL_TEMP): TEMPERATURE_SENSOR_SCHEMA,
         cv.Optional(CONF_COMPRESSOR_FREQUENCY): sensor.sensor_schema(
             unit_of_measurement=UNIT_HERTZ,

@@ -26,6 +26,9 @@ A big thanks to:
 A short changelog of sorts, I'll keep things here where a user might encounter
 breaking or significant changes, including configuration updates.
 
+* Added enforcement for a non-zero update interval at compile time. If you have
+  an `update_interval` of 0s specified in any polling components (s21, climate,
+  sensor) please change this to `never` to indicate the intent is to free run.
 * Modified humidity control to add support for humid heating. The setting is
   now also applied when switching to heating or cooling modes and only updated
   in those modes so the setting is preserved over mode changes.
@@ -44,17 +47,6 @@ breaking or significant changes, including configuration updates.
   on a compressor. Compressor `short_cycle` device class of lock removed; this
   was showing up in the HA Security dashboard. History will be inverted and
   should be purged if it matters to you.
-* Bumped minimum ESPHome version to 2026.4.0 in order to address a few issues.
-  If you have an `update_interval` of 0s specified in any polling components
-  (s21, climate, sensor) please change this to `never` to indicate the intent
-  to not poll. My code will treat this a request to free run and publish
-  updates when available. Improvements to ESPHome's scheduler mean 0s polls are
-  now honoured immediately and watchdog timeouts will occur. As of today
-  there's no warning or mitigation during codegen. My code will avoid these
-  lockups for now but in 2026.4.1 you'll see very tight polling loops until you
-  update your config, so update them now. At some point down the line I will
-  remove my local mitigation and ESPHome compile time warnings will serve.
-  See [15516](https://github.com/esphome/esphome/pull/15516) and [15799](https://github.com/esphome/esphome/pull/15799).
 * ***Important***: Updated configuration schema of climate component. The
   previous `update_interval` is moved to `offset_interval`. This is the period
   where the external reference temperature sensor offset is applied to the

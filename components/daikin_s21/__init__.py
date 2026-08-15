@@ -9,6 +9,7 @@ from esphome.const import (
   CONF_LED,
   CONF_MOTION,
   CONF_NEVER,
+  CONF_UPDATE_INTERVAL,
   ICON_ACCOUNT_CHECK,
 )
 
@@ -49,11 +50,15 @@ DAIKIN_MODE_CONFIG_ENUMS = {
 uart_ns = cg.esphome_ns.namespace("uart")
 UARTComponent = uart_ns.class_("UARTComponent")
 
+# ensure polling intervals aren't 0ms or fixed up by ESPHome to 1ms
+validate_interval = cv.All(cv.update_interval, cv.Range(min=cv.TimePeriodMilliseconds(milliseconds=2)))
+
 CONFIG_SCHEMA = (
     cv.COMPONENT_SCHEMA
     .extend({cv.GenerateID(): cv.declare_id(DaikinS21)})
     .extend(cv.polling_component_schema(CONF_NEVER))
     .extend({
+      cv.Optional(CONF_UPDATE_INTERVAL): validate_interval,
       cv.Required(CONF_UART): cv.use_id(UARTComponent),
       cv.Optional(CONF_DEBUG_COMMS, default=False): cv.boolean,
       cv.Optional(CONF_DEBUG_PROTOCOL, default=False): cv.boolean,

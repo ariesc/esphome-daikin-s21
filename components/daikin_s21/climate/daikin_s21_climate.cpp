@@ -38,12 +38,6 @@ DaikinC10 DaikinSetpointMode::load_target() {
 }
 
 void DaikinS21Climate::setup() {
-  // mitigation, remove when 2026.4.1 released
-  if (this->get_update_interval() <= 1) {
-    this->set_update_interval(SCHEDULER_DONT_RUN);
-    this->stop_poller();
-  }
-
   uint32_t h = this->get_object_id_hash();
   this->setpoint_params.heat_cool.target_pref = global_preferences->make_preference<int16_t>(h + 1);
   this->setpoint_params.cool.target_pref = global_preferences->make_preference<int16_t>(h + 2);
@@ -274,7 +268,7 @@ void DaikinS21Climate::control(const climate::ClimateCall &call) {
 
 void DaikinS21Climate::set_offset_interval(const uint32_t offset_interval) {
   // start offset recalculation timer if necessary
-  this->freerun_offset = (offset_interval == SCHEDULER_DONT_RUN) || (offset_interval <= 1);
+  this->freerun_offset = (offset_interval == SCHEDULER_DONT_RUN);
   if (this->freerun_offset == false) {
     this->set_interval(TIMER_ID_OFFSET, offset_interval, [this](){ this->check_offset = true; });
   }

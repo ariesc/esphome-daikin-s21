@@ -272,12 +272,6 @@ void DaikinS21::setup() {
   this->energy_pref_ = global_preferences->make_preference<EnergyCounters>(fnv1_hash("daikin_s21_energy"));
   this->energy_pref_.load(&this->energy_);  // leaves defaults (unseeded) if nothing stored
 
-  // mitigation, remove when 2026.4.1 released
-  if (this->get_update_interval() <= 1) {
-    this->set_update_interval(SCHEDULER_DONT_RUN);
-    this->stop_poller();
-  }
-
   // start 1min periodic state dump timer
   this->set_interval(60*1000, [this](){ this->dump_state(); });
 
