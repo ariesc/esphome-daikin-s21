@@ -51,7 +51,7 @@ class DaikinS21Climate : public climate::Climate,
   float get_current_humidity() const;
   DaikinFanMode get_daikin_fan_mode() const;
   bool set_daikin_fan_mode(DaikinFanMode fan);
-  void set_s21_climate();
+  void set_s21_climate() const;
 
   sensor::Sensor *temperature_sensor_{};
   sensor::Sensor *humidity_sensor_{};
@@ -62,10 +62,13 @@ class DaikinS21Climate : public climate::Climate,
   bool freerun_offset{};
   bool target_resolved{};
 
-  DaikinSetpointMode* get_setpoint_mode_params(climate::ClimateMode mode);
-  DaikinSetpointMode heat_cool_params{};
-  DaikinSetpointMode cool_params{};
-  DaikinSetpointMode heat_params{};
+  struct SetpointModeParams {
+    DaikinSetpointMode cool{};
+    DaikinSetpointMode heat{};
+    DaikinSetpointMode heat_cool{};
+
+    DaikinSetpointMode* get(climate::ClimateMode mode);
+  } setpoint_params;
 };
 
 } // namespace esphome::daikin_s21
