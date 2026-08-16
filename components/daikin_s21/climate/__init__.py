@@ -17,9 +17,11 @@ from esphome.const import (
     CONF_SENSOR,
     CONF_SUPPORTED_MODES,
     CONF_SUPPORTED_SWING_MODES,
+    CONF_UPDATE_INTERVAL,
 )
 from .. import (
     daikin_s21_ns,
+    validate_interval,
     CONF_S21_ID,
     S21_PARENT_SCHEMA,
 )
@@ -53,7 +55,8 @@ CONFIG_SCHEMA = (
     .extend(cv.polling_component_schema(CONF_NEVER))
     .extend(S21_PARENT_SCHEMA)
     .extend({
-        cv.Optional(CONF_OFFSET_INTERVAL, default="5min"): cv.update_interval,
+        cv.Optional(CONF_UPDATE_INTERVAL): validate_interval,
+        cv.Optional(CONF_OFFSET_INTERVAL, default="5min"): validate_interval,
         cv.Optional(CONF_SETPOINT_DITHER, default=True): cv.boolean,
         cv.Optional(CONF_SENSOR): cv.use_id(sensor.Sensor),
         cv.Optional(CONF_HUMIDITY_SENSOR): cv.use_id(sensor.Sensor),

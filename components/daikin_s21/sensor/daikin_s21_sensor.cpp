@@ -6,12 +6,6 @@ namespace esphome::daikin_s21 {
 static const char * const TAG = "daikin_s21.sensor";
 
 void DaikinS21Sensor::setup() {
-  // mitigation, remove when 2026.4.1 released
-  if (this->get_update_interval() <= 1) {
-    this->set_update_interval(SCHEDULER_DONT_RUN);
-    this->stop_poller();
-  }
-
   // register for update events from DaikinS21
   if (this->is_free_run()) {
     this->get_parent()->update_callbacks.add([this](){ this->enable_loop_soon_any_context(); });
